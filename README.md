@@ -2,7 +2,9 @@
 
 # AWS Services
 
-{{toc}}
+## Table Of Contents
+- [Lambda](#Lambda)
+
 
 ## Lambda
 ### Features
