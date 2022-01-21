@@ -18,6 +18,7 @@
 ### Usage
 #### API Gateway + Lambda + DynamoDB
 ![](img/apigateway_lambda.svg)
+
 例えば API Gateway と Lambda のプロキシ統合により、すぐ API が作成できる。
 API Gateway から Lambda ハンドラーのイベントに渡ってくる形式は以下の通り。
 ```json
@@ -122,6 +123,7 @@ def lambda_handler(event, context):
 
 #### CodePipeline + Lambda
 ![](img/codepipeline_lambda.svg)
+
 CI/CD 環境の構築でパイプラインを作成することがあり、
 その際に CodePipeline から Lambda をトリガーする場合。
 Lambda の event に json イベントを渡す。
