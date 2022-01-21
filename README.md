@@ -8,12 +8,12 @@
 
 ## Lambda
 ### Features
-サーバレスの FaaS(Function as a Service)。サーバレスであるので価格が安い。
-リクエスト数に応じて自動的にスケーリングしてくれる。
-基本的にはコールドスタートするので、最初に起動時は即時実行とはならない点に注意。
-また実行時間上限が15分であることにも注意。
-実行するためにはトリガーが必要。
-バージョンやエイリアスの概念があり、Lambda 内でバージョン管理できる。
+サーバレスの FaaS(Function as a Service)。サーバレスであるので価格が安い。  
+リクエスト数に応じて自動的にスケーリングしてくれる。  
+基本的にはコールドスタートするので、最初に起動時は即時実行とはならない点に注意。  
+また実行時間上限が15分であることにも注意。  
+実行するためにはトリガーが必要。  
+バージョンやエイリアスの概念があり、Lambda 内でバージョン管理できる。  
 トリガーから Lambda のハンドラーにイベントを渡せる。
 ### Usage
 #### API Gateway + Lambda + DynamoDB
@@ -124,9 +124,9 @@ def lambda_handler(event, context):
 #### CodePipeline + Lambda
 ![](img/codepipeline_lambda.svg)
 
-CI/CD 環境の構築でパイプラインを作成することがあり、
-その際に CodePipeline から Lambda をトリガーする場合。
-Lambda の event に json イベントを渡す。
+CI/CD 環境の構築でパイプラインを作成することがあり、  
+その際に CodePipeline から Lambda をトリガーする場合。  
+Lambda の event に json イベントを渡す。  
 CodePipeline から "UserParameters" に値を渡すことが可能。
 ```json
 {
