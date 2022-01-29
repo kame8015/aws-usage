@@ -168,3 +168,29 @@ CodePipeline から "UserParameters" に値を渡すことが可能。
     }
 }
 ```
+
+### LambdaからAuroraに接続する方法
+従来、LambdaからRDSに接続するのはアンチパターンであった。  
+具体的な接続方法はIAM認証トークンを使ってRDSに接続するというもの。
+
+[IAM 認証および AWS SDK for Python (Boto3) を使用した DB clusterへの接続](https://docs.aws.amazon.com/ja_jp/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.Connecting.Python.html)
+
+その理由は、Lambdaの実行のたびにRDSのコネクションを貼り直してしまうため、  
+コネクション数が増加してすぐDBコネクションエラーになってしまっていたからである。  
+しかし、RDS Proxyが登場したことにより、LambdaとRDSのコネクションプールの役目をRDS Proxyが担うことができるようになり、  コネクションを有効活用してRDSにアクセスできるようになった。  
+料金体系としては DBインスタンスのvCPU1つにつき1時間0.018USDである。(ただし最低料金として2つのvCPU分の料金がかかる)  
+なのでvCPUが4の場合、1ヶ月約5,700円ほどかかる見込みである。  
+よってLambdaはクーロンジョブで実行するだけだから、**そこまでコネクションを貼らないということが想定されるのであれば**使用することは検討の余地がありそう。
+
+実際の構築は下記のQiitaの記事が参考になりそう。
+
+- [祝GA‼︎【Go】Lambda + RDS 接続にRDS Proxyを使ってみた](https://qiita.com/maika_kamada/items/6eb6a40c17b4b8995acb)
+- [【AWS】RDS Proxyを使用してLambdaからAuroraに接続する](https://ichi-station.com/aws-rds-proxy-lambda-aurora/)
+
+注意点としては、ざっくり下記の点が挙げられる。
+- LambdaをAuroraとRDS Proxyと同じVPCに入れること
+- Lambdaを踏み台サーバと同じパブリックのサブネットに入れること
+- Lambdaに与えるセキュリティグループを作成して、RDS Proxyのインバウンドルールに与えること
+- RDS ProxyをAuroraと同じプライベートサブネットに入れること
+- RDS Proxyに与えるセキュリティグループを差k末井して、Auroraのインバウンドルールに与えること
+- LambdaからDB接続する際はpymysqlというライブラリを使用するが、Lambdaのライブラリに入っていないので、zipでまとめてインポートする必要がある
