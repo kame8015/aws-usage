@@ -1,9 +1,39 @@
 **Note to self: How to use AWS Services**
-
 # AWS Services
 
 ## Table Of Contents
 - [Lambda](#Lambda)
+- [API Gateway](#Lambda)
+- EC2
+- Lightsail
+- [Auto Scaling](#AutoScaling)
+- [Fargate](#Container)
+- [Elastic Container Service (ECS)](#Container)
+- [Elastic Container Registry (ECR)](#Container)
+- [AWS Batch](#Container)
+- [IAM](#IAM)
+- Cognito
+- CloudFormation
+- DynamoDB
+- RDS (Aurora)
+- CloudWatch (Logs / Event / Dashboard)
+- CodeCommit
+- CodeBuild
+- CodeDeploy
+- CodePipeline
+- S3
+- VPC
+- Route 53
+- CloudFront
+- Systems Manager
+- Secrets Manager
+- Key Management Service (KMS)
+- Simple Queue Service (SQS)
+- Amazon Simple Email Service (SES)
+- WAF
+- SNS (Simple Notification Service)
+- CloudShell
+- Amazon SageMaker
 
 
 ## Lambda
@@ -194,3 +224,79 @@ CodePipeline から "UserParameters" に値を渡すことが可能。
 - RDS ProxyをAuroraと同じプライベートサブネットに入れること
 - RDS Proxyに与えるセキュリティグループを差k末井して、Auroraのインバウンドルールに与えること
 - LambdaからDB接続する際はpymysqlというライブラリを使用するが、Lambdaのライブラリに入っていないので、zipでまとめてインポートする必要がある
+
+## AutoScaling
+EC2インスタンスの数を監視し、自動的にスケールアウトしたりスケールインしたりする。  
+インスタンスの数は、最大サイズ、最小サイズの範囲で希望サイズの分だけ指定したAMIから起動する設定ができる。  
+ELBに紐付けることもでき、ELBからのリクエストをAutoScalingGroup管轄のインスタンスに振り分けることができる。  
+既に起動しているインスタンスをAutoScalingGroupにアタッチすることもできるし、その逆もできる。またインスタンスを複数のアベイラビリティーゾーンで使用する設定も可能。  
+またEC2の起動設定と同様に、インスタンス起動時に実行するユーザデータも設定することができる。  
+希望数量を増減するにはいくつか方法があり、手動で行うか、スケジュールで自動的に行うか、標準メトリクスやカスタムメトリクスをCloudWatchで収集してアラームを発火することでスケールアウト・スケールインを行うことができる。
+![](img/autoscalinggroup.svg)
+
+## Container
+ローカルPCでDockerコンテナを起動するように、AWS上で行う方法を記載する。
+
+### ECS
+![](img/ecs.svg)
+Dockerでイメージを作成して、ECR(Elastic Container Registry)にプッシュして登録する。  
+登録されたイメージをECSにpullしてきてコンテナを起動する。
+
+ECSオブジェクトの関連図
+![](img/ecs-object.png)
+
+ECSのエンティティにはクラスター、サービス、タスク定義、コンテナ定義がある。  
+それぞれのエンティティに関する説明は下記の記事が参考になる。
+
+[Amazon EC2 Container Service(ECS)の概念整理](https://qiita.com/NewGyu/items/9597ed2eda763bd504d7)
+
+ざっくりと説明すると、クラスターの上でサービスを動作させ、ECRからイメージをプルしてきてタスクの中でコンテナを起動する、というもの。
+
+例えばLambdaからECSのタスクを起動することができ、ついでにパラメータも渡すことができる。
+
+### AWS Batch
+AWS BatchはざっくりというとECSにQueueの機能があるイメージ。
+
+AWS Batchのエンティティにはジョブ、ジョブ定義、ジョブキュー、コンピュータ環境がある。  
+これも以下の記事が参考になる。
+
+[AWS Batchに入門してみた](https://zenn.dev/nameless_gyoza/articles/what-is-aws-batch-20210327)
+
+ジョブの状態がRUNNABLEで止まることがあり、それはコンピュータ環境やIAMの設定が問題であることが多いのでその都度調べる。
+
+## IAM
+Identity and Access Managementというもので、AWSのサービスで「認証」と「認可」の設定を行うことができる。
+- 認証: 相手が誰(何)なのか確認すること
+- 認可: リソースへのアクセス権限を与えること
+
+IAMでは以下の機能がある。
+- IAMユーザ(グループ)
+- IAMポリシー
+- IAMロール
+
+### IAMユーザ
+AWSを利用するアカウント。また、IAMグループを作成して複数のIAMユーザをまとめて管理することができる。部署単位で権限を分けたい場合などに利用する。
+
+### IAMポリシー
+IAMユーザやIAMロールにアタッチすることができる。AWSリソースへの操作権限を設定する機能。
+- AWS管理ポリシー
+    - AWSが提供するIAMポリシー。各サービスに対して大まかな制御ポリシーが設定できる
+- カスタマー管理ポリシー
+    - JSONファイルなどを利用して設定するポリシー。AWS管理ポリシーよりも細やかな制御が可能
+- インラインポリシー
+    - 特定のIAMユーザやIAMロール専用に作成されるポリシー
+
+### IAMロール
+ユーザやグループではなく、EC2などのAWSのサービスや他のアカウントに対してAWSの操作権限を付与するための仕組み。  
+イメージとしてはIAMユーザがかぶる帽子のようなもの。例えば複数のIAMロールを作っておいて、スイッチロールすることによって一つのIAMユーザで権限を使い分けることができる。
+
+IAMのベストプラクティス
+- IAMユーザやIAMロールに設定する権限は最小限にする
+- 多要素認証(MFA)をできるだけ行う
+- CloudTrailでモニタリングする
+    - パスワードが漏洩したときにどのような操作が行われたかを記録しておくことができる
+    - SNSで通知を行うことができる
+- アクセスキーは極力使わない
+    - Gitにアクセスキーをあげてしまうと、クローラーに引っかかって漏洩する可能性が高い
+
+引用: [【AWS IAMとは？】初心者にもわかりやすく解説](https://www.wafcharm.com/blog/aws-iam-for-beginners/)
