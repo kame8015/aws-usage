@@ -12,8 +12,8 @@
 - [Elastic Container Registry (ECR)](#Container)
 - [AWS Batch](#Container)
 - [IAM](#IAM)
-- Cognito
-- CloudFormation
+- [Cognito](#Cognito)
+- [CloudFormation](#CloudFormation)
 - DynamoDB
 - RDS (Aurora)
 - CloudWatch (Logs / Event / Dashboard)
@@ -300,3 +300,90 @@ IAMのベストプラクティス
     - Gitにアクセスキーをあげてしまうと、クローラーに引っかかって漏洩する可能性が高い
 
 引用: [【AWS IAMとは？】初心者にもわかりやすく解説](https://www.wafcharm.com/blog/aws-iam-for-beginners/)
+
+## Cognito
+Cognitoは不特定多数のユーザの「認証・認可」機能を提供するAWSのサービス。  
+作成できるユーザの上限数は2,000万。  
+OIDC(Open ID Connect)との接続・連携に対応している。
+
+ユーザ情報のパスワードを管理しなくて済んだり、本人確認メールをSES経由で送信したり、ログイン画面を提供してくれたりする。
+
+Cognitoのコンポーネントには「ユーザプール」と「IDプール」と「Cognito Sync」がある。
+
+### ユーザプール
+ユーザ認証とユーザ管理を行うコンポーネント。ユーザ認証の方式としては以下の二通り。
+- Cognitoユーザプールが提供する認証機能
+    - ユーザ名とパスワードを入力してログイン認証を行う
+    - サインアップ時にメールアドレスまたは電話番号を使った本人確認も可能
+- 外部IDプロバイダと連携した認証(GoogleやFacebookなど)
+
+### IDプール
+外部の「IDプロバイダ」によって認証されたIDに対してAWSへのアクセス権限を持つ「一時クレデンシャル」を払い出すことができるコンポーネント(認可機能)。IDプールが認証のために利用できるIDプロバイダは以下の通り。
+- Cognitoユーザプール
+- Amazon
+- Facebook
+- Google
+- Twitter
+- OIDCに準拠したプロバイダ
+- SAMLに準拠したプロバイダ
+
+認証されたユーザのロールに応じて異なるIAMロールを割り当てることが可能。
+
+### Cognito Sync
+Cognitoを使ってログインしたユーザのプロファイルデータやアプリケーションデータを複数のデバイス間で共有することができる機能。類似サービスにAWS AppSyncがある。
+
+## CloudFormation
+AWSのリソースをJSONまたはYAML形式のテンプレートで作成してくれるサービス。IaC(Infrastructure as Code)が実現しやすくなる。(おすすめはYAML)
+
+IaCを実現することで得られる恩恵としては、複数の環境に同一のAWSリソースをすぐ作成できることであり、ヒューマンエラーも低減することができる。また、何のリソースが使われているか、そのリソースに使用されているパラメータが何なのか、といった管理も行いやすくなる。
+
+イメージとしては、  
+テンプレート -> スタック(with パラメータ) -> リソース の順番。
+
+パラメータやリソースIDなどをエクスポートすることによって、スタック間で参照することが可能。
+
+スタックの「変更セット」を作成することにより、そのスタックが管理しているリソースとこれから変更しようとしているリソースの差分を作ることができ、確認した後「変更セット」を適用することによってリソースを更新することができる。
+
+### テンプレートの要素
+```yaml
+# バージョン(必須)
+AWSTemplateFormatVersion: 2010-09-09
+
+# スタックの説明(任意)
+Description: sample template
+
+# メタデータ(任意) スタック作成・更新時の説明等
+Metadata:
+
+# パラメータ(任意)
+Parameters:
+  SampleParameter:
+    Description: sample param
+    Type: String
+    Default: staging
+    AllowedValues:
+      - staging
+      - production
+
+# マッピング(任意) !FindInMap で参照可能
+Mappings:
+  RegionMap:
+    ap-northeast-1:
+        Abbreviation: ap1
+    us-east-1:
+        Abbreviation: ue1
+
+# 条件(任意)
+Conditions:
+
+# 起動するAWSリソース(必須)
+Resources:
+
+# 出力(任意)
+Outputs:
+```
+
+サンプルや使い方などは以下の記事が参考になる。
+
+[【AWS】CloudFormationまとめ](https://zenn.dev/soshimiyamoto/articles/3c624728438902)
+
